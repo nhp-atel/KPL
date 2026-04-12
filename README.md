@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KaChuFul - Score Tracker
 
-## Getting Started
+A web-based score tracking app for the card game KaChuFul (Kutchfoil). Built with Next.js, React, and TypeScript.
 
-First, run the development server:
+## Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm start` | Start production server |
+| `npm run lint` | Run ESLint |
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 16** with App Router
+- **React 19** with `useReducer` for state management
+- **TypeScript** (strict mode)
+- **Tailwind CSS 4** for styling
+- **localStorage** for game persistence
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/
+│   ├── layout.tsx            Root layout (Geist fonts, metadata)
+│   ├── page.tsx              Home page — renders GameShell
+│   └── globals.css           Tailwind config, light/dark mode vars
+├── components/
+│   ├── GameShell.tsx         Main container, routes phases
+│   ├── SetupScreen.tsx       Player count & name entry
+│   ├── InitialDraw.tsx       Card draw for play order
+│   ├── GameBoard.tsx         Gameplay wrapper (bidding + scoring)
+│   ├── RoundHeader.tsx       Round number, trump suit, first bidder
+│   ├── BiddingPhase.tsx      Bid input with forbidden-bid rule
+│   ├── ScoringPhase.tsx      Actual tricks entry + point calc
+│   ├── Scoreboard.tsx        Standings table + round history
+│   └── SuitIcon.tsx          Suit symbol renderer (♠ ♣ ♦ ♥)
+├── hooks/
+│   └── useGameState.ts       useReducer + localStorage persistence
+└── lib/
+    ├── types.ts              All TypeScript types (Card, Player, GameState, etc.)
+    ├── deck.ts               Deck creation, card removal for player count
+    ├── game-logic.ts         Scoring rules, bid validation, round sequences
+    └── initial-draw.ts       Fisher-Yates shuffle, deal & sort for play order
+```
 
-## Deploy on Vercel
+## Game Flow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+Setup → Draw → [Bidding → Scoring] × N rounds → Game Over
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Setup** — Choose 3-8 players and enter names. The app calculates how many cards to remove so the deck divides evenly.
+2. **Draw** — Each player draws one card. Highest card determines first player.
+3. **Playing** — Repeats for each round (cards per player go 1, 2, ..., max, ..., 2, 1):
+   - **Bidding** — Players bid how many tricks they expect to win. The last bidder has a forbidden bid (total bids cannot equal cards in the round).
+   - **Scoring** — Enter actual tricks won. Points: correct bid = bid × 10 + 1 (bidding 0 correctly = 10 points); wrong = 0.
+4. **Game Over** — Final standings displayed.
+
+## Key Game Logic
+
+- **Trump suits** cycle in a triangle wave: ♠ ♦ ♣ ♥ ♣ ♦ ♠ ♦ ...
+- **Round sequence** ramps up then back down: 1, 2, ..., max, max-1, ..., 1
+- **Player order** rotates each round so a different player bids first
+- **Forbidden bid rule** prevents the last bidder from making the total bids equal the number of cards in the round
+
+## State Management
+
+All game state lives in a single `useReducer` hook (`useGameState`). Actions:
+
+| Action | Effect |
+|--------|--------|
+| `SET_PLAYERS` | Initialize game with player names, generate round/suit sequences |
+| `COMPLETE_DRAW` | Set player order from draw results, move to playing phase |
+| `SUBMIT_BIDS` | Lock in bids, transition to scoring sub-phase |
+| `SUBMIT_RESULTS` | Calculate points, record round, advance or end game |
+| `NEXT_ROUND` | Reset for next round |
+| `RESET_GAME` | Clear all state |
+
+State is auto-saved to `localStorage` (key: `kachuful-game-state`) after every action and restored on page load, so games survive refreshes.
