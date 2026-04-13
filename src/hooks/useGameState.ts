@@ -117,8 +117,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "RESET_GAME": {
-      localStorage.removeItem(STORAGE_KEY);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(STORAGE_KEY);
+      }
       return createInitialState();
+    }
+
+    case "HYDRATE": {
+      return action.state;
     }
 
     default:
@@ -140,18 +146,57 @@ function loadSavedState(): GameState | null {
   return null;
 }
 
-export function useGameState() {
+export function useGameState(roomCode?: string | null, isViewer?: boolean) {
   const [state, dispatch] = useReducer(
     gameReducer,
     null,
     () => loadSavedState() || createInitialState()
   );
 
+  // Save to localStorage (admin only, non-viewer)
   useEffect(() => {
-    if (state.phase !== "setup") {
+    if (!isViewer && state.phase !== "setup") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
-  }, [state]);
+  }, [state, isViewer]);
+
+  // Sync state to room (admin only)
+  useEffect(() => {
+    if (!roomCode || isViewer) return;
+    if (state.phase === "setup") return;
+
+    fetch(`/api/rooms/${roomCode}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state),
+    }).catch(() => {
+      // silent fail for sync
+    });
+  }, [state, roomCode, isViewer]);
+
+  // SSE listener (viewer only)
+  useEffect(() => {
+    if (!roomCode || !isViewer) return;
+
+    const eventSource = new EventSource(`/api/rooms/${roomCode}/stream`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const newState = JSON.parse(event.data) as GameState;
+        dispatch({ type: "HYDRATE", state: newState });
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    eventSource.onerror = () => {
+      // Will auto-reconnect
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [roomCode, isViewer]);
 
   const resetGame = useCallback(() => dispatch({ type: "RESET_GAME" }), []);
 

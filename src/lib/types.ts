@@ -55,4 +55,5 @@ export type GameAction =
   | { type: "SUBMIT_BIDS"; bids: RoundBid[] }
   | { type: "SUBMIT_RESULTS"; results: { playerId: number; actual: number }[] }
   | { type: "NEXT_ROUND" }
-  | { type: "RESET_GAME" };
+  | { type: "RESET_GAME" }
+  | { type: "HYDRATE"; state: GameState };

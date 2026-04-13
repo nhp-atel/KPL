@@ -1,12 +1,13 @@
 import { Suit, RoundBid } from "./types";
 
-const SUITS: Suit[] = ["spades", "diamonds", "clubs", "hearts"];
+// Repeating pattern of 8: forward (S,D,C,H) then reverse (H,C,D,S)
+const SUIT_CYCLE: Suit[] = [
+  "spades", "diamonds", "clubs", "hearts",
+  "hearts", "clubs", "diamonds", "spades",
+];
 
-// Triangle wave: 0,1,2,3,2,1,0,1,2,3,2,1,...
 export function getSuitForRound(roundIndex: number): Suit {
-  const pos = roundIndex % 6;
-  const index = pos <= 3 ? pos : 6 - pos;
-  return SUITS[index];
+  return SUIT_CYCLE[roundIndex % 8];
 }
 
 // Generate [1, 2, ..., max, max-1, ..., 1]

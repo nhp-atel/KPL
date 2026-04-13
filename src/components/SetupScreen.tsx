@@ -6,7 +6,7 @@ import { getMaxCardsPerPlayer } from "@/lib/deck";
 import { generateRoundSequence } from "@/lib/game-logic";
 
 interface SetupScreenProps {
-  dispatch: React.Dispatch<GameAction>;
+  dispatch: (action: GameAction) => void;
 }
 
 export default function SetupScreen({ dispatch }: SetupScreenProps) {
