@@ -8,6 +8,7 @@ interface BiddingPhaseProps {
   players: Player[]; // in current round's bidding order
   cardsPerPlayer: number;
   totalPlayers: number;
+  bids: RoundBid[];
   dispatch: React.Dispatch<GameAction>;
 }
 
@@ -15,9 +16,9 @@ export default function BiddingPhase({
   players,
   cardsPerPlayer,
   totalPlayers,
+  bids,
   dispatch,
 }: BiddingPhaseProps) {
-  const [bids, setBids] = useState<RoundBid[]>([]);
   const [currentBid, setCurrentBid] = useState<number>(0);
 
   const currentBidderIndex = bids.length;
@@ -29,19 +30,17 @@ export default function BiddingPhase({
 
   const handlePlaceBid = () => {
     if (!currentPlayer) return;
-    const newBids = [...bids, { playerId: currentPlayer.id, bid: currentBid }];
-    setBids(newBids);
+    dispatch({ type: "PLACE_BID", playerId: currentPlayer.id, bid: currentBid });
     setCurrentBid(0);
   };
 
   const handleConfirm = () => {
-    dispatch({ type: "SUBMIT_BIDS", bids });
+    dispatch({ type: "CONFIRM_BIDS" });
   };
 
   const handleUndo = () => {
     if (bids.length === 0) return;
-    const newBids = bids.slice(0, -1);
-    setBids(newBids);
+    dispatch({ type: "UNDO_BID" });
     setCurrentBid(0);
   };
 

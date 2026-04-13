@@ -51,6 +51,7 @@ export default function GameBoard({ state, dispatch }: GameBoardProps) {
           players={orderedPlayers}
           cardsPerPlayer={cardsPerPlayer}
           totalPlayers={players.length}
+          bids={bids}
           dispatch={dispatch}
         />
       ) : (

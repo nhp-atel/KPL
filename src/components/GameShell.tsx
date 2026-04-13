@@ -71,7 +71,7 @@ export default function GameShell() {
     return (
       <div className="flex flex-col min-h-screen p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6 max-w-lg mx-auto w-full">
-          <h1 className="text-xl font-bold">KaChuFul</h1>
+          <h1 className="text-xl font-bold">KaChuFuL</h1>
           <div className="flex items-center gap-3">
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-full font-medium">
               LIVE
@@ -97,7 +97,7 @@ export default function GameShell() {
     <div className="flex flex-col min-h-screen p-4 sm:p-6">
       {/* Header with room code */}
       <div className="flex items-center justify-between mb-6 max-w-lg mx-auto w-full">
-        <h1 className="text-xl font-bold">KaChuFul</h1>
+        <h1 className="text-xl font-bold">KaChuFuL</h1>
         <div className="flex items-center gap-3">
           {roomCode && (
             <div className="flex items-center gap-2">

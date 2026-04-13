@@ -36,7 +36,7 @@ export default function SetupScreen({ dispatch }: SetupScreenProps) {
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-md mx-auto">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-2">KaChuFul</h1>
+        <h1 className="text-4xl font-bold mb-2">KaChuFuL</h1>
         <p className="text-zinc-500">Card Game Score Tracker</p>
       </div>
 

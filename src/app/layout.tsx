@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KaChuFul - Score Tracker",
-  description: "Points recording system for the KaChuFul card game",
+  title: "KaChuFuL - Score Tracker",
+  description: "Points recording system for the KaChuFuL card game",
 };
 
 export default function RootLayout({

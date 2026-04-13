@@ -52,7 +52,9 @@ export interface GameState {
 export type GameAction =
   | { type: "SET_PLAYERS"; players: Player[] }
   | { type: "COMPLETE_DRAW"; playerOrder: number[]; players: Player[] }
-  | { type: "SUBMIT_BIDS"; bids: RoundBid[] }
+  | { type: "PLACE_BID"; playerId: number; bid: number }
+  | { type: "UNDO_BID" }
+  | { type: "CONFIRM_BIDS" }
   | { type: "SUBMIT_RESULTS"; results: { playerId: number; actual: number }[] }
   | { type: "NEXT_ROUND" }
   | { type: "RESET_GAME" }

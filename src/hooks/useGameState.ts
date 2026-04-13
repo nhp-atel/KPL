@@ -62,11 +62,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case "SUBMIT_BIDS": {
+    case "PLACE_BID": {
+      return {
+        ...state,
+        bids: [...state.bids, { playerId: action.playerId, bid: action.bid }],
+      };
+    }
+
+    case "UNDO_BID": {
+      return {
+        ...state,
+        bids: state.bids.slice(0, -1),
+      };
+    }
+
+    case "CONFIRM_BIDS": {
       return {
         ...state,
         subPhase: "scoring",
-        bids: action.bids,
       };
     }
 
