@@ -166,6 +166,7 @@ export default function GameShell() {
               currentRoundIndex={state.currentRoundIndex}
               suitSequence={state.suitSequence}
               roundSequence={state.roundSequence}
+              dispatch={dispatch}
             />
 
             <button
