@@ -28,7 +28,7 @@ function createInitialState(): GameState {
   };
 }
 
-function gameReducer(state: GameState, action: GameAction): GameState {
+export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "SET_PLAYERS": {
       const numPlayers = action.players.length;
@@ -138,6 +138,51 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "HYDRATE": {
       return action.state;
+    }
+
+    case "EDIT_ROUND": {
+      const idx = state.roundHistory.findIndex(
+        (r) => r.roundIndex === action.roundIndex
+      );
+      if (idx === -1) return state;
+
+      const existing = state.roundHistory[idx];
+      const updatedResults = action.actuals.map((a) => {
+        const bid = action.bids.find((b) => b.playerId === a.playerId)!;
+        return {
+          playerId: a.playerId,
+          bid: bid.bid,
+          actual: a.actual,
+          points: calculatePoints(bid.bid, a.actual),
+        };
+      });
+
+      const updatedRound: RoundRecord = {
+        roundIndex: existing.roundIndex,
+        cardsPerPlayer: existing.cardsPerPlayer,
+        trumpSuit: existing.trumpSuit,
+        results: updatedResults,
+      };
+
+      const newHistory = [
+        ...state.roundHistory.slice(0, idx),
+        updatedRound,
+        ...state.roundHistory.slice(idx + 1),
+      ];
+
+      const newScores: Record<number, number> = {};
+      state.players.forEach((p) => (newScores[p.id] = 0));
+      newHistory.forEach((round) => {
+        round.results.forEach((r) => {
+          newScores[r.playerId] = (newScores[r.playerId] || 0) + r.points;
+        });
+      });
+
+      return {
+        ...state,
+        roundHistory: newHistory,
+        cumulativeScores: newScores,
+      };
     }
 
     default:
