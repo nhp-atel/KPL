@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useGameState } from "@/hooks/useGameState";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { GameAction } from "@/lib/types";
 import Lobby from "./Lobby";
 import SetupScreen from "./SetupScreen";
@@ -20,6 +21,13 @@ export default function GameShell() {
     role !== "none" ? roomCode : null,
     role === "viewer"
   );
+
+  const wakeLockActive =
+    role !== "none" &&
+    (state.phase === "draw" ||
+      state.phase === "playing" ||
+      state.phase === "gameOver");
+  useWakeLock(wakeLockActive);
 
   const handleCreateRoom = useCallback(async () => {
     try {
