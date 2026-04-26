@@ -35,56 +35,74 @@ describe("getSuitForRound", () => {
     expect(getSuitForRound(15)).toBe("spades");
   });
 
-  it("produces correct suit for 5 players (19 rounds)", () => {
+  it("produces correct suit for 5 players (20 rounds)", () => {
+    // 8-cycle: spades, diamonds, clubs, hearts, hearts, clubs, diamonds, spades
+    // Rounds 0-7: full first cycle
+    // Rounds 8-15: full second cycle
+    // Rounds 16-19: spades, diamonds, clubs, hearts
     const expected = [
-      "spades", "diamonds", "clubs", "hearts",   // 1-4 cards
-      "hearts", "clubs", "diamonds", "spades",    // 5-8 cards
-      "spades", "diamonds",                        // 9-10 cards
-      "clubs", "hearts",                           // 9-8 cards (descending)
-      "hearts", "clubs", "diamonds", "spades",    // 7-4 cards
-      "spades", "diamonds", "clubs",              // 3-1 cards
+      "spades", "diamonds", "clubs", "hearts",
+      "hearts", "clubs", "diamonds", "spades",
+      "spades", "diamonds", "clubs", "hearts",
+      "hearts", "clubs", "diamonds", "spades",
+      "spades", "diamonds", "clubs", "hearts",
     ];
-    for (let i = 0; i < 19; i++) {
+    for (let i = 0; i < 20; i++) {
       expect(getSuitForRound(i)).toBe(expected[i]);
     }
   });
 });
 
 describe("generateRoundSequence", () => {
-  it("generates 1 to max to 1 for max=10", () => {
+  it("generates 1 to max to 1 with peak played twice for max=10", () => {
     const seq = generateRoundSequence(10);
-    expect(seq).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
-    expect(seq.length).toBe(19);
+    expect(seq).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+      10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
+    ]);
+    expect(seq.length).toBe(20);
   });
 
   it("generates correct sequence for max=8", () => {
     const seq = generateRoundSequence(8);
-    expect(seq).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1]);
-    expect(seq.length).toBe(15);
+    expect(seq).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 1]);
+    expect(seq.length).toBe(16);
   });
 
-  it("generates correct sequence for max=1", () => {
+  it("generates correct sequence for max=5", () => {
+    const seq = generateRoundSequence(5);
+    expect(seq).toEqual([1, 2, 3, 4, 5, 5, 4, 3, 2, 1]);
+    expect(seq.length).toBe(10);
+  });
+
+  it("generates correct sequence for max=1 (peak played twice)", () => {
     const seq = generateRoundSequence(1);
-    expect(seq).toEqual([1]);
-    expect(seq.length).toBe(1);
+    expect(seq).toEqual([1, 1]);
+    expect(seq.length).toBe(2);
   });
 
-  it("total rounds = 2*max - 1", () => {
+  it("total rounds = 2*max", () => {
     for (let max = 1; max <= 13; max++) {
-      expect(generateRoundSequence(max).length).toBe(2 * max - 1);
+      expect(generateRoundSequence(max).length).toBe(2 * max);
     }
+  });
+
+  it("middle elements are both equal to max (peak doubled)", () => {
+    const seq = generateRoundSequence(10);
+    expect(seq[9]).toBe(10);
+    expect(seq[10]).toBe(10);
   });
 });
 
 describe("generateSuitSequence", () => {
   it("returns correct number of suits", () => {
-    const seq = generateSuitSequence(19);
-    expect(seq.length).toBe(19);
+    const seq = generateSuitSequence(20);
+    expect(seq.length).toBe(20);
   });
 
   it("matches getSuitForRound for each index", () => {
-    const seq = generateSuitSequence(19);
-    for (let i = 0; i < 19; i++) {
+    const seq = generateSuitSequence(20);
+    for (let i = 0; i < 20; i++) {
       expect(seq[i]).toBe(getSuitForRound(i));
     }
   });

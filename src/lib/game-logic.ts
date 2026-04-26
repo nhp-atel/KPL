@@ -10,10 +10,10 @@ export function getSuitForRound(roundIndex: number): Suit {
   return SUIT_CYCLE[roundIndex % 8];
 }
 
-// Generate [1, 2, ..., max, max-1, ..., 1]
+// Generate [1, 2, ..., max, max, max-1, ..., 1] — peak played twice
 export function generateRoundSequence(max: number): number[] {
   const ascending = Array.from({ length: max }, (_, i) => i + 1);
-  const descending = Array.from({ length: max - 1 }, (_, i) => max - 1 - i);
+  const descending = Array.from({ length: max }, (_, i) => max - i);
   return [...ascending, ...descending];
 }
 
