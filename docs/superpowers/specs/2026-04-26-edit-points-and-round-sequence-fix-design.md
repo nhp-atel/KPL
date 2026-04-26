@@ -1,18 +1,20 @@
-# Edit past-round results + fix round sequence
+# Edit past-round results + fix round sequence + fix points formula
 
 ## Background
 
-Two bugs in the KaChuFul game:
+Three bugs in the KaChuFul game:
 
 1. **Round sequence is one short.** `generateRoundSequence(max)` produces `[1..max, max-1..1]` (length `2*max - 1`). The peak card count should be played twice — `[1..max, max..1]` (length `2*max`). For 5 players this means 20 rounds (currently 19).
 2. **No way to correct a scoring mistake.** Once a round's bid + actual is submitted, there is no UI to edit it. Mistakes (wrong bid recorded, wrong tricks-won) become permanent.
+3. **Points formula adds the `+1` bonus to every successful bid.** It should only apply to bid=0 (10 pts) and bid=1 (11 pts). Successful bids of 2+ should award a flat `bid * 10`.
 
-Both bugs are independent and shipped together for convenience.
+All three are independent and shipped together for convenience.
 
 ## Goals
 
 - Round sequence has the peak played twice for **all** player counts.
 - Admin can retroactively edit any past round's bid and actual per player. Cumulative scores recompute automatically. Viewers see the updated scores via the existing SSE sync.
+- Points formula awards `10` for a successful bid of 0, `11` for a successful bid of 1, and `bid * 10` for any successful bid ≥ 2. Failed bids award 0. (Old behavior: `bid * 10 + 1` for any successful bid ≥ 1.)
 
 ## Non-goals
 
@@ -24,6 +26,33 @@ Both bugs are independent and shipped together for convenience.
 ---
 
 ## Design
+
+### 0. Points formula
+
+In `src/lib/game-logic.ts`, replace `calculatePoints`:
+
+```ts
+export function calculatePoints(bid: number, actual: number): number {
+  if (bid !== actual) return 0;
+  if (bid === 0) return 10;
+  if (bid === 1) return 11;
+  return bid * 10;
+}
+```
+
+Effect on successful bids:
+
+| Bid | Old points | New points |
+|-----|------------|------------|
+| 0   | 10         | 10         |
+| 1   | 11         | 11         |
+| 2   | 21         | 20         |
+| 3   | 31         | 30         |
+| n≥2 | n*10 + 1   | n*10       |
+
+Failed bids stay at 0.
+
+**Retroactive impact on past rounds:** `RoundRecord.results[].points` is stored per round in `roundHistory`. Existing in-flight games carry old point values. The `EDIT_ROUND` reducer recomputes points via the new `calculatePoints`, but only for the round being edited — it does not silently rewrite untouched rounds. To recalc the entire history under the new formula, the admin can edit each round (a no-op edit triggers recompute), or reset and start a new game. This is intentional: silent retro-rewrites of cumulative scores would surprise players mid-game.
 
 ### 1. Round sequence
 
@@ -143,14 +172,27 @@ The `silent fail for sync` `.catch()` on the PUT continues to absorb transient n
 ### 5. Testing
 
 **Update `src/__tests__/game-logic.test.ts`:**
-- Adjust existing length assertions from `2*max - 1` to `2*max`.
+
+Round sequence:
+- Update `generateRoundSequence(10)` expected array to `[1..10, 10..1]` and length to 20.
+- Update `generateRoundSequence(8)` expected array to `[1..8, 8..1]` and length to 16.
+- Replace the loop-based `2*max - 1` assertion with `2*max`.
 - Add: `generateRoundSequence(5)` equals `[1,2,3,4,5,5,4,3,2,1]`.
 - Add: `generateRoundSequence(10)` middle slice contains `[..., 9, 10, 10, 9, ...]`.
+
+Suit sequence (5-player example): the existing "produces correct suit for 5 players (19 rounds)" test must be updated to 20 rounds, with the inserted second peak at index 10 ('diamonds' under the existing 8-cycle).
+
+Points formula:
+- Update "gives 21 points for bidding 2 and making 2" → expect 20.
+- Update "gives 31 points for bidding 3 and making 3" → expect 30.
+- Update "gives 101 points for bidding 10 and making 10" → expect 100.
+- Update "formula is N*10+1 for N>=1" → split into two: bid=1 → 11, bid≥2 → bid*10.
+- Keep existing bid=0,actual=0 → 10 and bid=1,actual=1 → 11 tests as-is.
 
 **New `src/__tests__/edit-round.test.ts`:**
 - `EDIT_ROUND` replaces only the targeted `roundHistory` entry; other entries are byte-identical.
 - `cumulativeScores` after edit equal a fresh sum across the whole new `roundHistory` (verified by computing manually for a small fixture).
-- Editing both bid and actual recomputes `points` via `calculatePoints` (e.g. bid=2 actual=2 cards=5 → 21).
+- Editing both bid and actual recomputes `points` via the new `calculatePoints` (e.g. bid=2 actual=2 → 20; bid=1 actual=1 → 11; bid=0 actual=0 → 10; bid=3 actual=2 → 0).
 - `phase`, `subPhase`, `currentRoundIndex`, live `bids` unchanged after `EDIT_ROUND`.
 
 **Manual UI verification:**
