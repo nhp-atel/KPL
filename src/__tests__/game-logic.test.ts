@@ -99,16 +99,16 @@ describe("calculatePoints", () => {
     expect(calculatePoints(1, 1)).toBe(11);
   });
 
-  it("gives 21 points for bidding 2 and making 2", () => {
-    expect(calculatePoints(2, 2)).toBe(21);
+  it("gives 20 points for bidding 2 and making 2", () => {
+    expect(calculatePoints(2, 2)).toBe(20);
   });
 
-  it("gives 31 points for bidding 3 and making 3", () => {
-    expect(calculatePoints(3, 3)).toBe(31);
+  it("gives 30 points for bidding 3 and making 3", () => {
+    expect(calculatePoints(3, 3)).toBe(30);
   });
 
-  it("gives 101 points for bidding 10 and making 10", () => {
-    expect(calculatePoints(10, 10)).toBe(101);
+  it("gives 100 points for bidding 10 and making 10", () => {
+    expect(calculatePoints(10, 10)).toBe(100);
   });
 
   it("gives 0 points when actual is more than bid", () => {
@@ -121,10 +121,16 @@ describe("calculatePoints", () => {
     expect(calculatePoints(5, 0)).toBe(0);
   });
 
-  it("formula is N*10+1 for N>=1", () => {
-    for (let n = 1; n <= 10; n++) {
-      expect(calculatePoints(n, n)).toBe(n * 10 + 1);
+  it("formula is N*10 for successful N>=2", () => {
+    for (let n = 2; n <= 10; n++) {
+      expect(calculatePoints(n, n)).toBe(n * 10);
     }
+  });
+
+  it("only bid 1 gets the +1 bonus on successful bid", () => {
+    expect(calculatePoints(1, 1)).toBe(11);
+    expect(calculatePoints(2, 2)).toBe(20);
+    expect(calculatePoints(3, 3)).toBe(30);
   });
 });
 

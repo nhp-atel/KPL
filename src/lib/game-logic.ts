@@ -22,10 +22,10 @@ export function generateSuitSequence(totalRounds: number): Suit[] {
 }
 
 export function calculatePoints(bid: number, actual: number): number {
-  if (bid === actual) {
-    return bid === 0 ? 10 : bid * 10 + 1;
-  }
-  return 0;
+  if (bid !== actual) return 0;
+  if (bid === 0) return 10;
+  if (bid === 1) return 11;
+  return bid * 10;
 }
 
 export function isValidBid(
