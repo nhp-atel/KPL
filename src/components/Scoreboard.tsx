@@ -1,7 +1,9 @@
 "use client";
 
-import { Player, RoundRecord, Suit } from "@/lib/types";
+import { useState } from "react";
+import { Player, RoundRecord, Suit, GameAction } from "@/lib/types";
 import SuitIcon from "./SuitIcon";
+import RoundEditor from "./RoundEditor";
 
 interface ScoreboardProps {
   players: Player[];
@@ -10,6 +12,7 @@ interface ScoreboardProps {
   currentRoundIndex: number;
   suitSequence: Suit[];
   roundSequence: number[];
+  dispatch?: React.Dispatch<GameAction>;
 }
 
 export default function Scoreboard({
@@ -19,13 +22,40 @@ export default function Scoreboard({
   currentRoundIndex,
   suitSequence,
   roundSequence,
+  dispatch,
 }: ScoreboardProps) {
+  const [expandedRoundIndex, setExpandedRoundIndex] = useState<number | null>(
+    null
+  );
+
   if (roundHistory.length === 0) return null;
 
-  // Sort players by cumulative score for ranking
   const ranked = [...players].sort(
     (a, b) => (cumulativeScores[b.id] || 0) - (cumulativeScores[a.id] || 0)
   );
+
+  const expandedRound =
+    expandedRoundIndex !== null
+      ? roundHistory.find((r) => r.roundIndex === expandedRoundIndex) ?? null
+      : null;
+
+  const toggleExpand = (roundIndex: number) => {
+    setExpandedRoundIndex((curr) => (curr === roundIndex ? null : roundIndex));
+  };
+
+  const handleSave = (
+    bids: { playerId: number; bid: number }[],
+    actuals: { playerId: number; actual: number }[]
+  ) => {
+    if (!dispatch || expandedRoundIndex === null) return;
+    dispatch({
+      type: "EDIT_ROUND",
+      roundIndex: expandedRoundIndex,
+      bids,
+      actuals,
+    });
+    setExpandedRoundIndex(null);
+  };
 
   return (
     <div className="w-full space-y-3">
@@ -63,16 +93,37 @@ export default function Scoreboard({
               <th className="text-left py-2 pr-2 sticky left-0 bg-white dark:bg-black">
                 Player
               </th>
-              {roundHistory.map((round, i) => (
-                <th key={i} className="text-center px-2 py-2 min-w-[48px]">
+              {roundHistory.map((round) => {
+                const isExpanded = round.roundIndex === expandedRoundIndex;
+                const headerInner = (
                   <div className="flex flex-col items-center">
                     <SuitIcon suit={suitSequence[round.roundIndex]} size="sm" />
                     <span className="text-xs text-zinc-400">
                       {roundSequence[round.roundIndex]}
                     </span>
                   </div>
-                </th>
-              ))}
+                );
+                return (
+                  <th
+                    key={round.roundIndex}
+                    className={`text-center px-2 py-2 min-w-[48px] ${
+                      isExpanded ? "bg-blue-100 dark:bg-blue-900/40" : ""
+                    }`}
+                  >
+                    {dispatch ? (
+                      <button
+                        onClick={() => toggleExpand(round.roundIndex)}
+                        className="w-full hover:opacity-70 transition"
+                        aria-label={`Edit round ${round.roundIndex + 1}`}
+                      >
+                        {headerInner}
+                      </button>
+                    ) : (
+                      headerInner
+                    )}
+                  </th>
+                );
+              })}
               <th className="text-center px-2 py-2 font-bold">Total</th>
             </tr>
           </thead>
@@ -85,22 +136,25 @@ export default function Scoreboard({
                 <td className="py-2 pr-2 font-medium sticky left-0 bg-white dark:bg-black">
                   {player.name}
                 </td>
-                {roundHistory.map((round, i) => {
+                {roundHistory.map((round) => {
                   const result = round.results.find(
                     (r) => r.playerId === player.id
                   );
                   const pts = result?.points || 0;
+                  const isExpanded = round.roundIndex === expandedRoundIndex;
                   return (
                     <td
-                      key={i}
+                      key={round.roundIndex}
                       className={`text-center px-2 py-2 ${
                         pts > 0
                           ? "text-green-600 font-medium"
                           : "text-zinc-400"
                       } ${
-                        round.roundIndex === currentRoundIndex - 1
-                          ? "bg-blue-50 dark:bg-blue-900/10"
-                          : ""
+                        isExpanded
+                          ? "bg-blue-50 dark:bg-blue-900/20"
+                          : round.roundIndex === currentRoundIndex - 1
+                            ? "bg-blue-50 dark:bg-blue-900/10"
+                            : ""
                       }`}
                     >
                       {pts}
@@ -115,6 +169,15 @@ export default function Scoreboard({
           </tbody>
         </table>
       </div>
+
+      {dispatch && expandedRound && (
+        <RoundEditor
+          players={players}
+          round={expandedRound}
+          onSave={handleSave}
+          onCancel={() => setExpandedRoundIndex(null)}
+        />
+      )}
     </div>
   );
 }

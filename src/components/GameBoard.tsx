@@ -70,6 +70,7 @@ export default function GameBoard({ state, dispatch }: GameBoardProps) {
         currentRoundIndex={currentRoundIndex}
         suitSequence={suitSequence}
         roundSequence={roundSequence}
+        dispatch={dispatch}
       />
     </div>
   );
